@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oil Degradation Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+            position: relative;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-area.has-image {
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .upload-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .upload-content.hidden {
+            display: none;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .preview-container {
+            display: none;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 350px;
+            width: auto;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            object-fit: contain;
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+            padding: 30px;
+            background: #f8f9ff;
+            border-radius: 15px;
+        }
+
+        .result-header {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .result-main {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .confidence-bar {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: width 1s ease;
+        }
+
+        .recommendation {
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+
+        .recommendation.safe {
+            background: #d4edda;
+            color: #155724;
+            border-left: 5px solid #28a745;
+        }
+
+        .recommendation.caution {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 5px solid #ffc107;
+        }
+
+        .recommendation.danger {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 5px solid #dc3545;
+        }
+
+        .probabilities {
+            margin-top: 20px;
+        }
+
+        .prob-item {
+            margin-bottom: 15px;
+        }
+
+        .prob-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.95em;
+        }
+
+        .prob-bar {
+            background: #e0e0e0;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .prob-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.8s ease;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            display: none;
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 5px solid #dc3545;
+        }
+
+        .reset-btn {
+            background: #6c757d;
+            margin-left: 10px;
+        }
+
+        .detail-section {
+            margin-top: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .detail-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .detail-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .detail-section li {
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .detail-section li:last-child {
+            border-bottom: none;
+        }
+
+        .detail-section.why-cannot-use {
+            background: #fff5f5;
+            border-left: 5px solid #dc3545;
+        }
+
+        .detail-section.health-risks {
+            background: #fff5f5;
+            border-left: 5px solid #dc3545;
+        }
+
+        .detail-section.chemical-changes {
+            background: #fff9e6;
+            border-left: 5px solid #ffc107;
+        }
+
+        .detail-section.if-used {
+            background: #f0f8ff;
+            border-left: 5px solid #667eea;
+        }
+
+        .detail-section.technical {
+            background: #f8f9fa;
+            border-left: 5px solid #6c757d;
+        }
+
+        .detail-section.safe {
+            background: #f0fff4;
+            border-left: 5px solid #28a745;
+        }
+
+        .icon {
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛢️ Oil Degradation Classifier</h1>
+        <p class="subtitle">Upload an image of cooking oil to check its quality and usage count</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-content" id="uploadContent">
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">Click to upload or drag and drop</div>
+                <div class="upload-subtext">Supports: JPG, JPEG, PNG</div>
+            </div>
+            <div class="preview-container" id="previewContainer">
+                <img id="previewImage" class="preview-image" alt="Preview">
+            </div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div style="text-align: center;">
+            <button class="btn" id="uploadBtn" style="display: none;">Analyze Oil Quality</button>
+            <button class="btn reset-btn" id="resetBtn" style="display: none;">Upload Another Image</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 15px; color: #667eea;">Analyzing image...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="results" id="results">
+            <div class="result-header">Analysis Results</div>
+            
+            <div class="result-main">
+                <div class="result-label">Oil Status</div>
+                <div class="result-value" id="usageDescription"></div>
+                
+                <div class="result-label">Confidence Level</div>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidenceFill" style="width: 0%">
+                        <span id="confidenceText">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recommendation" id="recommendation"></div>
+
+            <!-- Why Cannot Use Section -->
+            <div class="detail-section why-cannot-use" id="whyCannotUse" style="display: none;">
+                <h3><span class="icon">⚠️</span> Why This Oil Cannot Be Used</h3>
+                <ul id="whyCannotUseList"></ul>
+            </div>
+
+            <!-- Health Risks Section -->
+            <div class="detail-section health-risks" id="healthRisks" style="display: none;">
+                <h3><span class="icon">🏥</span> Health Risks</h3>
+                <ul id="healthRisksList"></ul>
+            </div>
+
+            <!-- Chemical Changes Section -->
+            <div class="detail-section chemical-changes" id="chemicalChanges">
+                <h3><span class="icon">⚗️</span> Chemical Changes in Oil</h3>
+                <ul id="chemicalChangesList"></ul>
+            </div>
+
+            <!-- If Used Section -->
+            <div class="detail-section if-used" id="ifUsed">
+                <h3><span class="icon">🔬</span> What Happens If Used</h3>
+                <ul id="ifUsedList"></ul>
+            </div>
+
+            <!-- Technical Details Section -->
+            <div class="detail-section technical" id="technicalDetails">
+                <h3><span class="icon">📊</span> Technical Analysis</h3>
+                <ul id="technicalDetailsList"></ul>
+            </div>
+
+            <div class="probabilities">
+                <h3 style="margin-bottom: 15px; color: #333;">Detailed Probabilities</h3>
+                <div class="prob-item">
+                    <div class="prob-label">
+                        <span>Fresh Oil (Never Used)</span>
+                        <span id="prob0">0%</span>
+                    </div>
+                    <div class="prob-bar">
+                        <div class="prob-fill" id="probBar0" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="prob-item">
+                    <div class="prob-label">
+                        <span>Used Once</span>
+                        <span id="prob1">0%</span>
+                    </div>
+                    <div class="prob-bar">
+                        <div class="prob-fill" id="probBar1" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="prob-item">
+                    <div class="prob-label">
+                        <span>Used Twice</span>
+                        <span id="prob2">0%</span>
+                    </div>
+                    <div class="prob-bar">
+                        <div class="prob-fill" id="probBar2" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="prob-item">
+                    <div class="prob-label">
+                        <span>Used Three Times</span>
+                        <span id="prob3">0%</span>
+                    </div>
+                    <div class="prob-bar">
+                        <div class="prob-fill" id="probBar3" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const uploadContent = document.getElementById('uploadContent');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const results = document.getElementById('results');
+
+        let selectedFile = null;
+
+        // Click to upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // File selection
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Please upload an image file');
+                return;
+            }
+
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                uploadContent.classList.add('hidden');
+                previewContainer.style.display = 'block';
+                uploadArea.classList.add('has-image');
+                uploadBtn.style.display = 'inline-block';
+                resetBtn.style.display = 'inline-block';
+                results.style.display = 'none';
+                error.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Upload and analyze
+        uploadBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            loading.style.display = 'block';
+            uploadBtn.disabled = true;
+            error.style.display = 'none';
+            results.style.display = 'none';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    showError(data.error || 'An error occurred');
+                }
+            } catch (err) {
+                showError('Failed to connect to server');
+            } finally {
+                loading.style.display = 'none';
+                uploadBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            // Usage description
+            document.getElementById('usageDescription').textContent = data.usage_description;
+
+            // Confidence
+            const confidence = data.confidence.toFixed(2);
+            document.getElementById('confidenceText').textContent = confidence + '%';
+            setTimeout(() => {
+                document.getElementById('confidenceFill').style.width = confidence + '%';
+            }, 100);
+
+            // Recommendation
+            const recommendation = document.getElementById('recommendation');
+            recommendation.textContent = data.recommendation;
+            
+            // Set recommendation style
+            recommendation.className = 'recommendation';
+            if (data.recommendation.includes('✓')) {
+                recommendation.classList.add('safe');
+            } else if (data.recommendation.includes('⚠')) {
+                recommendation.classList.add('caution');
+            } else {
+                recommendation.classList.add('danger');
+            }
+
+            // Why Cannot Use Section
+            const whyCannotUseSection = document.getElementById('whyCannotUse');
+            const whyCannotUseList = document.getElementById('whyCannotUseList');
+            if (data.why_cannot_use && data.why_cannot_use.length > 0) {
+                whyCannotUseList.innerHTML = '';
+                data.why_cannot_use.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    whyCannotUseList.appendChild(li);
+                });
+                whyCannotUseSection.style.display = 'block';
+            } else {
+                whyCannotUseSection.style.display = 'none';
+            }
+
+            // Health Risks Section
+            const healthRisksSection = document.getElementById('healthRisks');
+            const healthRisksList = document.getElementById('healthRisksList');
+            if (data.health_risks && data.health_risks.length > 0) {
+                healthRisksList.innerHTML = '';
+                data.health_risks.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    healthRisksList.appendChild(li);
+                });
+                healthRisksSection.style.display = 'block';
+            } else {
+                healthRisksSection.style.display = 'none';
+            }
+
+            // Chemical Changes Section
+            const chemicalChangesList = document.getElementById('chemicalChangesList');
+            chemicalChangesList.innerHTML = '';
+            if (data.chemical_changes && data.chemical_changes.length > 0) {
+                data.chemical_changes.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    chemicalChangesList.appendChild(li);
+                });
+            }
+
+            // If Used Section
+            const ifUsedList = document.getElementById('ifUsedList');
+            ifUsedList.innerHTML = '';
+            if (data.if_used && data.if_used.length > 0) {
+                data.if_used.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    ifUsedList.appendChild(li);
+                });
+            }
+
+            // Technical Details Section
+            const technicalDetailsList = document.getElementById('technicalDetailsList');
+            technicalDetailsList.innerHTML = '';
+            if (data.technical_details && data.technical_details.length > 0) {
+                data.technical_details.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    technicalDetailsList.appendChild(li);
+                });
+            }
+
+            // Update section colors based on status
+            const chemicalSection = document.getElementById('chemicalChanges');
+            const ifUsedSection = document.getElementById('ifUsed');
+            const technicalSection = document.getElementById('technicalDetails');
+            
+            if (data.status === 'safe') {
+                chemicalSection.className = 'detail-section chemical-changes safe';
+                ifUsedSection.className = 'detail-section if-used safe';
+            } else if (data.status === 'caution') {
+                chemicalSection.className = 'detail-section chemical-changes';
+                ifUsedSection.className = 'detail-section if-used';
+            } else if (data.status === 'danger') {
+                chemicalSection.className = 'detail-section chemical-changes';
+                ifUsedSection.className = 'detail-section if-used';
+            }
+
+            // Probabilities
+            const probs = data.all_probabilities;
+            const probKeys = ['Fresh Oil', 'Used Once', 'Used Twice', 'Used Three Times'];
+            probKeys.forEach((key, index) => {
+                const prob = probs[key].toFixed(2);
+                document.getElementById(`prob${index}`).textContent = prob + '%';
+                setTimeout(() => {
+                    document.getElementById(`probBar${index}`).style.width = prob + '%';
+                }, 100 + index * 100);
+            });
+
+            results.style.display = 'block';
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+
+        // Reset
+        resetBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            uploadContent.classList.remove('hidden');
+            previewContainer.style.display = 'none';
+            uploadArea.classList.remove('has-image');
+            uploadBtn.style.display = 'none';
+            resetBtn.style.display = 'none';
+            results.style.display = 'none';
+            error.style.display = 'none';
+            // Hide all detail sections
+            document.getElementById('whyCannotUse').style.display = 'none';
+            document.getElementById('healthRisks').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dataset (too large for GitHub - ~1.5GB of images)
+Datasets/
+
+# Trained model weights (too large for GitHub - ~300MB each)
+models/*.pth
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+
+# Jupyter Notebook
+.ipynb_checkpoints/

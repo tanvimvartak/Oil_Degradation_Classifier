@@ -1,0 +1,44 @@
+======================================================================
+CLASSIFICATION REPORT
+======================================================================
+
+Overall Accuracy: 100.00%
+
+                precision    recall  f1-score   support
+
+     fresh.oil     1.0000    1.0000    1.0000        67
+1.time.use.oil     1.0000    1.0000    1.0000        74
+2.time.use.oil     1.0000    1.0000    1.0000        60
+3.time.use.oil     1.0000    1.0000    1.0000        54
+
+      accuracy                         1.0000       255
+     macro avg     1.0000    1.0000    1.0000       255
+  weighted avg     1.0000    1.0000    1.0000       255
+
+======================================================================
+Per-Class Metrics:
+======================================================================
+
+fresh.oil:
+  Precision: 1.0000
+  Recall: 1.0000
+  F1-Score: 1.0000
+  Support: 67
+
+1.time.use.oil:
+  Precision: 1.0000
+  Recall: 1.0000
+  F1-Score: 1.0000
+  Support: 74
+
+2.time.use.oil:
+  Precision: 1.0000
+  Recall: 1.0000
+  F1-Score: 1.0000
+  Support: 60
+
+3.time.use.oil:
+  Precision: 1.0000
+  Recall: 1.0000
+  F1-Score: 1.0000
+  Support: 54
